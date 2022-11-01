@@ -56,8 +56,7 @@ def coef_a_b(l):
 
 
 def val_field(x, z):
-    global R, K, Eps_1, Eps_2, coon
-    L = range(2)
+    global R, K, Eps_1, Eps_2, coon, A_kml, B_kml, L
     val = 0
     r, theta, phi = system_cords_sphere(x, z)
     r = r * 1e-9
@@ -70,26 +69,27 @@ def val_field(x, z):
                                                                                                       theta)
     else:
         for l in L:
-            a, b = coef_a_b(l)
             for m in range(-l, l + 1):
                 val += (1 / ((K * r) ** 0.5 * Eps_1 ** 0.25)) * (
-                        a * jv(l + 0.5, Eps_1 * K * r) + b * yve(l + 0.5, Eps_1 * K * r)) * sph_harm(m, l, phi,
+                        A_kml[l] * jv(l + 0.5, Eps_1 * K * r) + B_kml[l] * yve(l + 0.5, Eps_1 * K * r)) * sph_harm(m, l, phi,
                                                                                                      theta)
     return np.complex128(val).real
 
 
 if __name__ == '__main__':
-    coon = create_engine('mysql+pymysql://toxa:password@localhost:3306/DIPLOM', echo=False)
+    # coon = create_engine('mysql+pymysql://toxa:password@localhost:3306/DIPLOM', echo=False)
     num_of_points = 400
-    xy = np.linspace(-2000, 2000, num=num_of_points)
-    x1, y1 = np.meshgrid(xy, xy)
+    xy = np.linspace(-1500, 1500, num=num_of_points)
     R = 10e-6
     Eps_2 = 1
     Eps_1 = 0.004
-    n1 = np.sqrt(Eps_1)
     n2 = 1
+    n1 = np.sqrt(Eps_1)
     K = 2 * np.pi / 800e-9
-    # print([(coef_a_b(i), coef_a_b2(i)) for i in range(2)])
+
+    L = range(2)
+    A_kml, B_kml = np.array([coef_a_b(l) for l in range(3)]).T
+
     FIELD = []
     for q, i in enumerate(tqdm.tqdm(xy)):
         FIELD.append([])
