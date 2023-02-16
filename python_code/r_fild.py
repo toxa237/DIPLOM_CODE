@@ -1,12 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from scipy.special import spherical_jn, spherical_yn, lpmv, sph_harm
+import joblib
+import tqdm
 
 
 def cords2sphere_cords(x, y, z):
     rho = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-    if z != 0:
-        theta = np.arctan(np.sqrt(x ** 2 + y ** 2) / z) + np.pi / 2
+    if z > 0:
+        theta = np.arctan(np.sqrt(x ** 2 + y ** 2) / z)
+    elif z < 0:
+        theta = np.arctan(np.sqrt(x ** 2 + y ** 2) / z) + np.pi
     else:
         theta = np.pi / 2
     if x > 0:
@@ -24,22 +29,27 @@ def cords2sphere_cords(x, y, z):
     return rho, theta, phi
 
 
-def val_field(rho):
-    global a, L, A0, A1, B1
+def val_field(x, y, z, a, k):
+    global L, A0, A1, B1
+    rho, theta, phi = cords2sphere_cords(x, y, z)
+    # print(rho, theta, phi)
     var = 0
     if rho < a:
         for l in L:
-            var += A0 * spherical_jn(l, k * rho * n0)
+            for m in range(-l, l+1):
+                var += A0 * spherical_jn(l, k * rho * n0) * sph_harm(m, l, phi, theta).real
     elif rho > a:
-        for l in L:
-            var += A1[l-1] * spherical_jn(l, k * rho * n1) + B1[l-1] * spherical_yn(l, k * rho * n1)
+        for i, l in enumerate(L):
+            for m in range(-l, l+1):
+                var += (A1[i] * spherical_jn(l, k * rho * n1) + B1[i] * spherical_yn(l, k * rho * n1)) *\
+                       sph_harm(m, l, phi, theta).real
     else:
         return 0
     return var
 
 
-def coef_a_b(l):
-    global a, k, A0, n0, n1
+def coef_a_b(a, k, l):
+    global A0, n0, n1
     A = a * k * A0 * (a * k * n0 * n0 * spherical_jn(l + 1, a * k * n0) * spherical_yn(l, a * k * n1) -
                       spherical_jn(l, a * k * n0) * (l * (n0 - n1) * spherical_yn(l, a * k * n1) +
                                                      a * k * n1 * n1 * spherical_yn(l + 1, a * k * n1)))
@@ -49,19 +59,55 @@ def coef_a_b(l):
     return A, B
 
 
+# по радіусу та по к
 if __name__ == "__main__":
+    num_of_points = 300
     eps0 = 1
-    eps1 = 1.6
-    a = 60 * 10e-9
-    lam = 400 * 10e-9
+    eps1 = 0.4
     n0 = np.sqrt(eps0)
     n1 = np.sqrt(eps1)
-    k = 2 * np.pi / lam
-    L = range(1, 11)
+    L = range(0, 5)
     A0 = 1
-    A1, B1 = np.array([coef_a_b(l) for l in L]).T
-    X = np.linspace(-5000*10e-9, 5000*10e-9, 600)
-    fild = [val_field(x) for x in X]
-    plt.plot(X, fild)
-    plt.grid()
+    X = np.linspace(-5000*10e-9, 5000*10e-9, num_of_points)  #
+
+    # a = 200 * 10e-9
+    # lam = 400 * 10e-9
+    # k = 2 * np.pi / lam
+    # A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
+    #
+    # field = [val_field(x, 0, 0, a, k) for x in X]
+    # plt.plot(X, field)
+    # plt.plot([a, a], [0, 0.5])
+    # plt.grid()
+    # plt.show()
+
+    a = 200 * 10e-9
+    lam = 400 * 10e-9
+    k = 2 * np.pi / lam
+    FIELD = np.zeros((num_of_points, num_of_points))
+    A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
+
+    for i in tqdm.tqdm(range(num_of_points)):
+        for j in range(num_of_points):
+            FIELD[i, j] = val_field(X[i], 0, X[j], a, k)
+
+    x1, y1 = np.meshgrid(X, X)
+    plt.contourf(x1, y1, FIELD)
+    circle = plt.Circle((0, 0), a, color='white', fill=False)
+    plt.gca().add_patch(circle)
+    plt.colorbar()
     plt.show()
+
+# graf = []
+
+# for k in np.linspace(20000, 200000, 200):
+#     A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
+#     graf.append([val_field(x, 0, 0, a, k) for x in X])
+#
+# graf = np.array(graf)
+# fig = go.Figure(data=[go.Surface(z=graf)])
+# fig.show()
+# plt.plot(X, graf[100, :])
+# plt.figure()
+# plt.plot(np.linspace(20000, 200000, 200), graf[:, 100])
+# plt.show()
