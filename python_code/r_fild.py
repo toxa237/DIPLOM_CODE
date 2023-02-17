@@ -30,22 +30,22 @@ def cords2sphere_cords(x, y, z):
 
 
 def val_field(x, y, z, a, k):
-    global L, A0, A1, B1
+    global L, A0, A1, B1, C
     rho, theta, phi = cords2sphere_cords(x, y, z)
     # print(rho, theta, phi)
     var = 0
     if rho < a:
         for l in L:
             for m in range(-l, l+1):
-                var += A0 * spherical_jn(l, k * rho * n0) * sph_harm(m, l, phi, theta).real
+                var += A0 * spherical_jn(l, k * rho * n0) * sph_harm(m, l, phi, theta)
     elif rho > a:
         for i, l in enumerate(L):
             for m in range(-l, l+1):
                 var += (A1[i] * spherical_jn(l, k * rho * n1) + B1[i] * spherical_yn(l, k * rho * n1)) *\
-                       sph_harm(m, l, phi, theta).real
+                       sph_harm(m, l, phi, theta)
     else:
         return 0
-    return var
+    return np.real(var)
 
 
 def coef_a_b(a, k, l):
@@ -59,43 +59,39 @@ def coef_a_b(a, k, l):
     return A, B
 
 
-# по радіусу та по к
 if __name__ == "__main__":
     num_of_points = 300
     eps0 = 1
-    eps1 = 0.4
+    eps1 = 10
     n0 = np.sqrt(eps0)
     n1 = np.sqrt(eps1)
     L = range(0, 5)
-    A0 = 1
-    X = np.linspace(-5000*10e-9, 5000*10e-9, num_of_points)  #
-
-    # a = 200 * 10e-9
-    # lam = 400 * 10e-9
-    # k = 2 * np.pi / lam
-    # A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
-    #
-    # field = [val_field(x, 0, 0, a, k) for x in X]
-    # plt.plot(X, field)
-    # plt.plot([a, a], [0, 0.5])
-    # plt.grid()
-    # plt.show()
+    A0 = 10**5
+    C = 3*10e8
+    X = np.linspace(-1000*10e-9, 1000*10e-9, num_of_points)
 
     a = 200 * 10e-9
     lam = 400 * 10e-9
     k = 2 * np.pi / lam
-    FIELD = np.zeros((num_of_points, num_of_points))
     A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
+    
+    # field = [val_field(x, 0, 0, a, k) for x in X]
+    # plt.plot(X, field)
+    # plt.plot([a, a], [0, 0.5])
+    # plt.grid()
 
+    FIELD = np.zeros((num_of_points, num_of_points))
     for i in tqdm.tqdm(range(num_of_points)):
         for j in range(num_of_points):
             FIELD[i, j] = val_field(X[i], 0, X[j], a, k)
 
+    plt.figure()
     x1, y1 = np.meshgrid(X, X)
     plt.contourf(x1, y1, FIELD)
     circle = plt.Circle((0, 0), a, color='white', fill=False)
     plt.gca().add_patch(circle)
     plt.colorbar()
+    plt.savefig('10.png')
     plt.show()
 
 # graf = []
