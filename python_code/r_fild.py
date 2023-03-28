@@ -62,19 +62,21 @@ def coef_a_b(a, k, l):
 if __name__ == "__main__":
     num_of_points = 300
     eps0 = 1
-    eps1 = 10
+    eps1 = 1.7
     n0 = np.sqrt(eps0)
     n1 = np.sqrt(eps1)
-    L = range(0, 5)
-    A0 = 10**5
-    C = 3*10e8
-    X = np.linspace(-1000*10e-9, 1000*10e-9, num_of_points)
+    L = range(0, 6)
+    A0 = 1
 
-    a = 200 * 10e-9
+    # C = 3*10e8
+    X = np.linspace(-1000*10e-9, 1000*10e-9, num_of_points)
+    #
+    a = 100 * 10e-9
     lam = 400 * 10e-9
     k = 2 * np.pi / lam
     A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
-    
+    print(A1, B1)
+
     # field = [val_field(x, 0, 0, a, k) for x in X]
     # plt.plot(X, field)
     # plt.plot([a, a], [0, 0.5])
@@ -85,13 +87,14 @@ if __name__ == "__main__":
         for j in range(num_of_points):
             FIELD[i, j] = val_field(X[i], 0, X[j], a, k)
 
+    print(FIELD[150][150])
     plt.figure()
     x1, y1 = np.meshgrid(X, X)
     plt.contourf(x1, y1, FIELD)
     circle = plt.Circle((0, 0), a, color='white', fill=False)
     plt.gca().add_patch(circle)
     plt.colorbar()
-    plt.savefig('10.png')
+    # plt.savefig('10.png')
     plt.show()
 
 # graf = []
