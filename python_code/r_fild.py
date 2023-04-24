@@ -42,10 +42,12 @@ def val_field(x, y, z, a, k):
         for i, l in enumerate(L):
             for m in range(-l, l+1):
                 var += (A1[i] * spherical_jn(l, k * rho * n1) + B1[i] * spherical_yn(l, k * rho * n1)) *\
-                       sph_harm(m, l, phi, theta)
+                       sph_harm(m, l, phi, theta) + (1j**l) * (2*l + 1) * spherical_jn(l, k*rho) * \
+                       lpmv(m, l, np.cos(theta)) * np.exp(1j * l * phi)
+            # var += (1j**l) * (2*l + 1) * spherical_jn(l, k*rho) * lpmv(0, l, np.cos(theta)) * np.exp(1j * l * phi)
     else:
         return 0
-    return np.real(var)
+    return var
 
 
 def coef_a_b(a, k, l):
@@ -60,18 +62,18 @@ def coef_a_b(a, k, l):
 
 
 if __name__ == "__main__":
-    num_of_points = 300
+    num_of_points = 200
     eps0 = 1
-    eps1 = 1.7
+    eps1 = 2.6
     n0 = np.sqrt(eps0)
     n1 = np.sqrt(eps1)
-    L = range(0, 6)
+    L = np.arange(0, 5, 1)
     A0 = 1
 
     # C = 3*10e8
-    X = np.linspace(-1000*10e-9, 1000*10e-9, num_of_points)
+    X = np.linspace(-100*10e-7, 100*10e-7, num_of_points)
     #
-    a = 100 * 10e-9
+    a = 10000 * 10e-9
     lam = 400 * 10e-9
     k = 2 * np.pi / lam
     A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
@@ -81,20 +83,35 @@ if __name__ == "__main__":
     # plt.plot(X, field)
     # plt.plot([a, a], [0, 0.5])
     # plt.grid()
+    # plt.show()
+    # exit()
 
-    FIELD = np.zeros((num_of_points, num_of_points))
+    FIELD = np.zeros((num_of_points, num_of_points), dtype=np.complex128)
     for i in tqdm.tqdm(range(num_of_points)):
         for j in range(num_of_points):
             FIELD[i, j] = val_field(X[i], 0, X[j], a, k)
 
-    print(FIELD[150][150])
     plt.figure()
     x1, y1 = np.meshgrid(X, X)
-    plt.contourf(x1, y1, FIELD)
+    plt.contourf(x1, y1, np.real(FIELD))
     circle = plt.Circle((0, 0), a, color='white', fill=False)
     plt.gca().add_patch(circle)
     plt.colorbar()
-    # plt.savefig('10.png')
+
+    # plt.figure()
+    # x1, y1 = np.meshgrid(X, X)
+    # plt.contourf(x1, y1, np.imag(FIELD))
+    # circle = plt.Circle((0, 0), a, color='white', fill=False)
+    # plt.gca().add_patch(circle)
+    # plt.colorbar()
+    #
+    # plt.figure()
+    # x1, y1 = np.meshgrid(X, X)
+    # plt.contourf(x1, y1, np.abs(FIELD))
+    # circle = plt.Circle((0, 0), a, color='white', fill=False)
+    # plt.gca   ().add_patch(circle)
+    # plt.colorbar()
+    #
     plt.show()
 
 # graf = []
