@@ -71,13 +71,14 @@ if __name__ == "__main__":
     A0 = 1
 
     # C = 3*10e8
-    X = np.linspace(-100*10e-7, 100*10e-7, num_of_points)
+    X = np.linspace(-100*10e-8, 100*10e-8, num_of_points)
     #
-    a = 10000 * 10e-9
+    a = 50 * 10e-9
     lam = 400 * 10e-9
     k = 2 * np.pi / lam
     A1, B1 = np.array([coef_a_b(a, k, l) for l in L]).T
     print(A1, B1)
+    exit()
 
     # field = [val_field(x, 0, 0, a, k) for x in X]
     # plt.plot(X, field)

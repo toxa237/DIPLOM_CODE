@@ -10,7 +10,7 @@ class CrossSection:
         self.R = np.array(r)
         self.L = np.arange(0, L+1, 1)
         self.Cross_section = None
-        self.LAMDA = np.arange(300, 1200, 2)
+        self.LAMDA = np.arange(300, 1202, 2)
         self.N = np.real(RelativePermittivity(eps + [eps0], self.LAMDA).Name)
         self.N = self.N ** (1/2)
 
@@ -20,18 +20,11 @@ class CrossSection:
         A[0, :] = A0
         B[0, :] = 0
         for l in self.L:
-            coef = self.calc_matrix_for_coef(l, lamb_ind)
-            try:
-                coef2 = np.linalg.solve(coef[0], coef[1])
-                # coef2 = self.cramer_rule(coef[0], coef[1])
-            except:
-                coef2 = np.zeros(coef[1].shape[0])
-                print(lamb_ind, l, coef[0], coef[1], self.cramer_rule(coef[0], coef[1]), sep='\n', end='\n======\n')
-            # a, b = self.A0_coef(coef2[::2], coef2[1::2], l, lamb_ind)
-            # A[1:, l] = a
-            # B[1:, l] = b
-            A[1:, l] = coef2[::2]
-            B[1:, l] = coef2[1::2]
+            coef_x, coef_y = self.calc_matrix_for_coef(l, lamb_ind)
+            coef = np.linalg.solve(coef_x, coef_y)
+            # coef = self.cramer_rule(coef_x, coef_y)
+            A[1:, l] = coef[::2]
+            B[1:, l] = coef[1::2]
         return A, B
 
     def A0_coef(self, a, b, l, lamb_ind):
@@ -142,27 +135,19 @@ class CrossSection:
         self.Cross_section = np.array(cs)
         return self.Cross_section
 
-    def plot_cross_section(self):
-        plt.plot(self.LAMDA, self.Cross_section)
-        # plt.xlabel("Довжина падаючої хвилі, нм")  # Wavelength
-        # plt.ylabel("Переріз екстинкції, у.о.")
+    def plot_cross_section(self, label=""):
+        plt.plot(self.LAMDA, self.Cross_section, label=label)
+        plt.xlabel("Довжина падаючої хвилі, нм", fontsize=20)  # Wavelength
+        plt.ylabel("SCA", fontsize=20)
+        if label:
+            plt.legend()
         # plt.show()
 
 
 if __name__ == "__main__":
-    R = np.array([180, 200]) * 10e-9
+    R = np.array([50, 70]) * 10e-9
     EPS = ["Au", "Ag"]
-    a = CrossSection(R, EPS, L=1)
-
-    # for i in a.LAMDA:
-    #     ac, bc = a.calc_coef(i)
-    #     print(np.abs(ac[-1]), np.abs(bc[-1]), sep='\n', end="\n++++++++++\n")
+    a = CrossSection(R, EPS, L=0)
     a.calc_cross_section()
     a.plot_cross_section()
-
-    # lam = a.LAMDA[100]
-    # print(lam, a.calc_coef(lam))
-
-    # plt.plot(np.arange(400, 1000, 1), a.Cross_section)
-
     plt.show()

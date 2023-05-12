@@ -1,5 +1,8 @@
 .idea
 .vscode
-mie_field
-/else
-
+else
+2d_particle_code
+cpp_some_code
+python_code/2d_particle_with_outer_layer
+python_code/graff
+python_code/models

@@ -49,7 +49,7 @@ class CrossSection:
         cs = []
         for i in range(self.LAMDA.shape[0]):
             a, b = np.array([self.calc_coef_lamd_l(i, l) for l in self.L]).T
-            cs.append(sum([np.abs(a[n]) ** 2 + np.abs(b[n]) ** 2 for n in self.L]))
+            cs.append(sum([np.abs(a[n]) ** 2 + np.abs(b[n]) ** 2 for n in self.L[1:]]))
         self.Cross_section = np.array(cs)
 
     def plot_cross_section(self):
@@ -60,7 +60,7 @@ class CrossSection:
 if __name__ == "__main__":
     R = np.array([20]) * 10e-9
     EPS = ["Au"]
-    a = CrossSection(R, EPS, L=1)
+    a = CrossSection(R, EPS, L=2)
 
     a.calc_cross_section()
     a.plot_cross_section()

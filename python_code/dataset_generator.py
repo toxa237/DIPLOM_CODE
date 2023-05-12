@@ -1,58 +1,65 @@
 import numpy as np
-import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text as sql_text
 from cross_section_sphere import CrossSection
 
 
+tabl_data_name = 'DATA4DOUBLE_SPHERE_WITH_DIELECTRIC'
+tabl_cs_name = 'CS4DOUBLE_SPHERE_WITH_DIELECTRIC'
+
 engine = create_engine('mysql+pymysql://toxa:password@localhost:3306/DIPLOM', echo=False)
 
-coon = engine.connect()
-sql_query = """CREATE TABLE DATA4SIMPLE_SPHERE
-(ID INT NOT NULL AUTO_INCREMENT,
-R TEXT,
-Material TEXT,
-PRIMARY KEY (ID))"""
-coon.execute(sql_query)
+# coon = engine.connect()
+# sql_query = sql_text(f"""CREATE TABLE {tabl_data_name}
+# (ID INT NOT NULL AUTO_INCREMENT,
+# R TEXT,
+# Material TEXT,
+# PRIMARY KEY (ID))""")
+# coon.execute(sql_query)
+#
+# columns = [f'{i}nm DOUBLE' for i in np.arange(300, 1202, 2)]
+# columns_str = ', '.join(columns)
+# sql_query = sql_text(f"""CREATE TABLE {tabl_cs_name}
+# (ID INT NOT NULL AUTO_INCREMENT,
+# DATA_ID INT,
+# {columns_str},
+# PRIMARY KEY (ID),
+# FOREIGN KEY (DATA_ID) REFERENCES {tabl_data_name}(ID))""")
+# coon.execute(sql_query)
+# coon.close()
 
-columns = [f'{i}nm DOUBLE' for i in np.arange(300, 1200, 2)]
-columns_str = ', '.join(columns)
-sql_query = f"""CREATE TABLE CS4SIMPLE_SPHERE
-(ID INT NOT NULL AUTO_INCREMENT,
-DATA_ID INT,
-{columns_str},
-PRIMARY KEY (ID),
-FOREIGN KEY (DATA_ID) REFERENCES DATA4SIMPLE_SPHERE(ID))"""
-coon.execute(sql_query)
-coon.close()
 
+material = ["Cu", "Au", "glass", "TiO2", "Ti"]
+columns = [f'{i}nm' for i in np.arange(300, 1202, 2)]
+size = 2
 
-material = ["Ag", "Au", "Cu"]
-columns = [f'{i}nm' for i in np.arange(300, 1200, 2)]
+for i in range(6000):
+    print(f'\r{i}/6000 ', end='')
+    conn = engine.connect()
+    r = np.array(sorted(np.random.randint(30, 201, size=size)))
+    eps = [np.random.choice(material)]
+    while len(eps) < size:
+        a = np.random.choice(material)
+        if eps[-1] != a:
+            eps.append(a)
 
-with engine.begin() as conn:
-    for _ in range(3000):
-        r = np.array(sorted([np.random.randint(30, 201) for _ in range(2)]))
-        eps = np.random.choice(material, 2, replace=False).tolist()
-        srt_r = '|'.join([str(i) for i in r])
-        srt_eps = '|'.join([str(i) for i in eps])
+    srt_r = '|'.join([str(i) for i in r])
+    srt_eps = '|'.join([str(i) for i in eps])
 
-        result = conn.execute(f"""SELECT ID FROM DATA4SIMPLE_SPHERE WHERE R={srt_r}
-                                AND Material= '{srt_eps}'""")
-        existing_id = result.scalar()
+    result = conn.execute(sql_text(f"""SELECT ID FROM {tabl_data_name} WHERE R='{srt_r}' AND Material='{srt_eps}' """))
+    existing_id = result.scalar()
 
-        if existing_id:
-            print(f"Запис з R = {srt_r} и "
-                  f"Material = {srt_eps} вже є в таблиці")
-            continue
+    if existing_id:
+        print(f"Запис з R = {srt_r} и "
+              f"Material = {srt_eps} вже є в таблиці")
+        continue
 
-        cs = CrossSection(r * 10e-9, eps, L=0)
-        cs.calc_cross_section()
-        # вставка данных в таблицу DATA4SIMPLE_SPHERE и получение ID
-        result = conn.execute(f"""INSERT INTO DATA4SIMPLE_SPHERE (R, Material) VALUES ('{srt_r}', 
-                              '{srt_eps}')""")
-        data_id = result.lastrowid
+    cs = CrossSection(r * 10e-9, eps, L=0)
+    cs.calc_cross_section()
+    # вставка данных в таблицу DATA4SIMPLE_SPHERE и получение ID
 
-        # вставка данных в таблицу CS4SIMPLE_SPHERE
-        values = ', '.join(str(i) for i in cs.Cross_section)
-        conn.execute(f"INSERT INTO CS4SIMPLE_SPHERE (DATA_ID, {', '.join(columns)}) VALUES ({data_id}, {values})")
-
+    result = conn.execute(sql_text(f"""INSERT INTO {tabl_data_name} (R, Material) VALUES ('{srt_r}', '{srt_eps}')"""))
+    data_id = result.lastrowid
+    # вставка данных в таблицу CS4SIMPLE_SPHERE
+    values = ', '.join(str(i) for i in cs.Cross_section)
+    conn.execute(sql_text(f"INSERT INTO {tabl_cs_name} (DATA_ID, {', '.join(columns)}) VALUES ({data_id}, {values})"))
+    conn.close()

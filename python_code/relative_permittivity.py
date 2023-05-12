@@ -12,7 +12,6 @@ class RelativePermittivity:
         # self.SQL_CON = create_engine('mysql+pymysql://toxa:password@localhost:3306/DIPLOM', echo=False)
 
         self.Name = []
-
         for i in range(len(list_name)):
             if isinstance(list_name[i], str):
                 self.Name.append(self.list_of_val(list_name[i]))
@@ -21,25 +20,45 @@ class RelativePermittivity:
 
         self.Name = np.array(self.Name)
 
-    def list_of_val(self, name_of_metal):
-
-        if name_of_metal in ['gold', 'Au']:
+    def list_of_val(self, name_of_material):
+        if name_of_material in ['gold', 'Au']:
             df = pd.read_excel('data4materials/Au.xlsx')
-        elif name_of_metal in ['silver', 'Ag']:
+            material = 'metal'
+        elif name_of_material in ['silver', 'Ag']:
             df = pd.read_excel('data4materials/Ag.xlsx')
-        elif name_of_metal in ['Al']:
+            material = 'metal'
+        elif name_of_material in ['Al']:
             df = pd.read_excel('data4materials/Al.xlsx')
-        elif name_of_metal in ['Cu']:
+            material = 'metal'
+        elif name_of_material in ['Cu']:
             df = pd.read_excel('data4materials/Cu.xlsx')
+            material = 'metal'
+        elif name_of_material in ['Ti']:
+            df = pd.read_excel('data4materials/Ti.xlsx')
+            material = 'metal'
+        elif name_of_material in ['glass']:
+            eps_ = 7
+            material = 'dielectric'
+        elif name_of_material in ['ebonite']:
+            eps_ = 4.3
+            material = 'dielectric'
+        elif name_of_material in ['TiO2']:
+            eps_ = 2.6142
+            material = 'dielectric'     
         else:
             raise Exception("metal not in base")
 
+        if material == 'metal':
+            w = df['Wavelength, µm'].values * 1000
+            n = df['n'].values
+            k = df['k'].values
+            fn = CubicSpline(w, n)
+            fk = CubicSpline(w, k)
+        else:
+            fn = lambda x: eps_
+            fk = lambda x: 0
+
         list_of_coef = []
-        w = df['Wavelength, µm'].values * 1000
-        n = df['n'].values
-        k = df['k'].values
-        fn = CubicSpline(w, n)
-        fk = CubicSpline(w, k)
         for i in self.list_lambda:
             list_of_coef.append(fn(i) + 1j * fk(i))
 
