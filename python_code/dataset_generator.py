@@ -3,37 +3,38 @@ from sqlalchemy import create_engine, text as sql_text
 from cross_section_sphere import CrossSection
 
 
-tabl_data_name = 'DATA4DOUBLE_SPHERE_WITH_DIELECTRIC'
-tabl_cs_name = 'CS4DOUBLE_SPHERE_WITH_DIELECTRIC'
+tabl_data_name = 'DATA4DOUBLE_SPHERE_WITH_EPS_OUT'
+tabl_cs_name = 'CS4DOUBLE_SPHERE_WITH_EPS_OUT'
 
 engine = create_engine('mysql+pymysql://toxa:password@localhost:3306/DIPLOM', echo=False)
 
-# coon = engine.connect()
-# sql_query = sql_text(f"""CREATE TABLE {tabl_data_name}
-# (ID INT NOT NULL AUTO_INCREMENT,
-# R TEXT,
-# Material TEXT,
-# PRIMARY KEY (ID))""")
-# coon.execute(sql_query)
-#
-# columns = [f'{i}nm DOUBLE' for i in np.arange(300, 1202, 2)]
-# columns_str = ', '.join(columns)
-# sql_query = sql_text(f"""CREATE TABLE {tabl_cs_name}
-# (ID INT NOT NULL AUTO_INCREMENT,
-# DATA_ID INT,
-# {columns_str},
-# PRIMARY KEY (ID),
-# FOREIGN KEY (DATA_ID) REFERENCES {tabl_data_name}(ID))""")
-# coon.execute(sql_query)
-# coon.close()
+coon = engine.connect()
+sql_query = sql_text(f"""CREATE TABLE {tabl_data_name}
+(ID INT NOT NULL AUTO_INCREMENT,
+R TEXT,
+Material TEXT,
+PRIMARY KEY (ID))""")
+coon.execute(sql_query)
+
+columns = [f'{i}nm DOUBLE' for i in np.arange(300, 1202, 2)]
+columns_str = ', '.join(columns)
+sql_query = sql_text(f"""CREATE TABLE {tabl_cs_name}
+(ID INT NOT NULL AUTO_INCREMENT,
+DATA_ID INT,
+{columns_str},
+PRIMARY KEY (ID),
+FOREIGN KEY (DATA_ID) REFERENCES {tabl_data_name}(ID))""")
+coon.execute(sql_query)
+coon.close()
 
 
-material = ["Cu", "Au", "glass", "TiO2", "Ti"]
+material = ["Cu", "Au"]
 columns = [f'{i}nm' for i in np.arange(300, 1202, 2)]
 size = 2
+count = 3000
 
-for i in range(6000):
-    print(f'\r{i}/6000 ', end='')
+for i in range(count):
+    print(f'\r{i}/{count} ', end='')
     conn = engine.connect()
     r = np.array(sorted(np.random.randint(30, 201, size=size)))
     eps = [np.random.choice(material)]

@@ -10,11 +10,12 @@ class FildScattering(CrossSection):
         self.Fild = np.zeros((size, size), dtype=np.complex128)
         self.xyz = np.linspace(x_min, x_max, size) * 10e-9
         self.A, self.B = self.calc_coef(lamb_index)
-        print(self.A, '\n', self.B)
+        # print(self.A, '\n', self.B)
         self.K = 2 * np.pi / (self.LAMDA[lamb_index] * 10e-9)
         self.LAM_IND = lamb_index
 
     def calc_field(self, plane: str = "xy", else_cords=0):
+        else_cords = else_cords * 10e-9
         match plane:
             case "xy":
                 for i, x in enumerate(self.xyz):
@@ -48,8 +49,7 @@ class FildScattering(CrossSection):
                         self.B[layer_n, i] * spherical_yn(l, self.K * rho * self.N[layer_n, self.LAM_IND])) * \
                         sph_harm(m, l, theta, phi)
                 if layer_n == -1:
-                    var += (1j ** l) * (2 * l + 1) * spherical_jn(l, self.K * rho) * \
-                           lpmv(0, l, np.cos(theta)) * np.exp(1j * l * phi)
+                    var += (1j ** l) * (2 * l + 1) * spherical_jn(l, self.K * rho) * lpmv(0, l, np.cos(theta))
         return var
 
     @staticmethod
@@ -86,10 +86,10 @@ class FildScattering(CrossSection):
 
 if __name__ == "__main__":
     R = np.array([100]) * 10e-9
-    EPS = [2.6]
-    a = FildScattering(R, EPS, L=5, lamb_index=200, x_min=-1000, x_max=1000, size=250)
+    EPS = ["Ag"]
+    a = FildScattering(R, EPS, L=10, lamb_index=300, x_min=-2000, x_max=2000, size=250)
 
-    a.calc_field(plane="xz")
+    a.calc_field(plane="xz", else_cords=1)
     a.plot_field()
 
     plt.show()

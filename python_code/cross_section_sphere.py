@@ -21,8 +21,8 @@ class CrossSection:
         B[0, :] = 0
         for l in self.L:
             coef_x, coef_y = self.calc_matrix_for_coef(l, lamb_ind)
-            coef = np.linalg.solve(coef_x, coef_y)
-            # coef = self.cramer_rule(coef_x, coef_y)
+            # coef = np.linalg.solve(coef_x, coef_y)
+            coef = self.cramer_rule(coef_x, coef_y)
             A[1:, l] = coef[::2]
             B[1:, l] = coef[1::2]
         return A, B
@@ -136,7 +136,7 @@ class CrossSection:
         return self.Cross_section
 
     def plot_cross_section(self, label=""):
-        plt.plot(self.LAMDA, self.Cross_section, label=label)
+        plt.plot(self.LAMDA, self.Cross_section/np.max(self.Cross_section), label=label)
         plt.xlabel("Довжина падаючої хвилі, нм", fontsize=20)  # Wavelength
         plt.ylabel("SCA", fontsize=20)
         if label:
@@ -145,8 +145,8 @@ class CrossSection:
 
 
 if __name__ == "__main__":
-    R = np.array([50, 70]) * 10e-9
-    EPS = ["Au", "Ag"]
+    R = np.array([100, 150]) * 10e-9
+    EPS = ["Au", "Cu"]
     a = CrossSection(R, EPS, L=0)
     a.calc_cross_section()
     a.plot_cross_section()
